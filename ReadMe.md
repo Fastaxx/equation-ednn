@@ -13,3 +13,7 @@ Evolutional Deep Neural Networks (EDNN, Du and Zaki (2021)).
 Remplace la discrétisation spatiale par le réseau de neurone. Mise à jour des paramètres du réseau au cours du temps
 
 Ce nouvel usage des réseaux de neurones est au centre des problématiques actuelles, qui cherchent à combiner le meilleur de la mécanique classique et du Machine Learning.
+
+## Références
+- Bagheri, S., D. S. Henningson, J. Hoepffner, and P. J. Schmid. 2009. “Input-Output Analysis and Control Design Applied to a Linear Model of Spatially Developing Flows.” Applied Mechanics Reviews.
+- Du, Y., and T. A. Zaki. 2021. “Evolutional Deep Neural Network.” Physical Review E.
