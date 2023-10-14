@@ -1,4 +1,5 @@
 # Installation
+Code dans répertoire travail (`$HOME/work/notebooks`) et accessible dans le répertoire du container `/tf/notebooks`
 
 ## Docker
 
