@@ -1,6 +1,36 @@
 # Installation
 Code dans répertoire travail (`$HOME/work/notebooks`) et accessible dans le répertoire du container `/tf/notebooks`
 
+## Pyenv Virtualenv
+
+Installer pyenv : https://github.com/pyenv/
+```brew update
+brew install pyenv
+```
++ Env Variables (.bash_profile)
+
+Installation de python
+`pyenv install <version-python>`
+
+Création de l'environnement
+`pyenv virtualenv <version-python> <nom-venv>`
+
+Dans un nouveau shell, activer
+`pyenv activate <nom-venv>`
+
+Installation des requirements.txt
+```
+scipy
+matplotlib
+torch
+numpy
+tqdm
+```
+`pip install -r requirements.txt`
+
+`pip freeze -l > requirements.txt`
+
+ 
 ## Docker
 
 ### Tensorflow
