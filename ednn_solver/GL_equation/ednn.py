@@ -375,7 +375,6 @@ class EvolutionalDNN:
     def training_step_real(self, X_batch, Y_batch):
         with tf.GradientTape(persistent=True) as tape:
             Ypred = self.output(X_batch)[0]
-            print(len(Ypred))
             aux = [tf.reduce_mean(tf.square(Ypred[i] - Y_batch[i,0])) for i in range(len(Ypred))]
             loss_data = tf.add_n(aux)
             loss = loss_data
