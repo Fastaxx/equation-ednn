@@ -52,7 +52,7 @@ def main():
 
     Nt = 1000
     dt = 1e-2
-    tot_eps = 100
+    tot_eps = 1000
 
     # ------------------------------------------------------------------------------
     # Generate the collocation points and initial condition array
@@ -93,7 +93,7 @@ def main():
         # Train the initial condition tot_eps epochs, 
         for i in range(tot_eps):
             EDNN.train(Input, InitU, InitV, epochs=1,
-                   batch_size=100, verbose=False, timer=True)
+                   batch_size=100, verbose=False, timer=False)
         # Evaluate and output the initial condition 
         Input = tf.convert_to_tensor(Input)
         [U,V] = EDNN.output(Input)

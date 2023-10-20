@@ -1,6 +1,7 @@
 # Solve Ginzburg-Landau equation with EDNN
 
 $$\frac{\partial q}{\partial t} = - \nu \frac{\partial q}{\partial x} + \gamma \frac{\partial^2 q}{\partial x^2} + \mu q$$
+avec $\nu = U+2i c_u$ et $\gamma =1+ic_d$ et $\mu=\mu_0-c_u^2$
 
 1. Add related folder : ./GL_NN/
 2. Train NN on initial condition : `python main.py 0`
@@ -18,12 +19,12 @@ $$\frac{\partial q}{\partial t} = - \nu \frac{\partial q}{\partial x} + \gamma \
 ## Settings
 
 - Define Initial condition : Kflowinit
-- Collocation points distribution
-- Physical domain
-- Parameters
-- Numbers of time steps
-- Time step
-- Number of epochs
-- Marching Method
-- Activation function
-- Optimizer
+- Collocation points distribution : Nx
+- Physical domain : x1, x2
+- Parameters : U, cu, cd, mu0, mu2
+- Numbers of time steps : Nt
+- Time step : dt
+- Number of epochs : tot_eps
+- Marching Method : Runge_Kutta, Forward_Euler
+- Activation function : tanh, relu, adaptive_global
+- Optimizer : Adam, SGD, ...

@@ -216,21 +216,22 @@ class EvolutionalDNN:
 
                 if timer: 
                     t0 = time.time()
-                    loss_data_real = self.training_step(X_batch_real, Y_batch_real)
-                    loss_data_img = self.training_step(X_batch_img, Y_batch_img)
-                    print (ep, ba, loss_data_real.numpy(), loss_data_img.numpy())
+
+                loss_data_real = self.training_step_real(X_batch_real, Y_batch_real)
+                loss_data_img = self.training_step_img(X_batch_img, Y_batch_img)
+                print (ep, ba, loss_data_real.numpy(), loss_data_img.numpy())
                 if timer:
                     print("Time per batch:", time.time()-t0)
                     if ba>10: timer = False
 
            # Print status
-            # if ep%print_freq==0:
-            #     self.print_status(ep,
-            #                       loss_data_real,
-            #                       verbose=verbose)
-            #     self.print_status(ep,
-            #                       loss_data_img,
-            #                       verbose=verbose)
+            if ep%print_freq==0:
+                self.print_status_real(ep,
+                                  loss_data_real,
+                                  verbose=verbose)
+                self.print_status_img(ep,
+                                  loss_data_img,
+                                  verbose=verbose)
             #Save progress
             self.ckpt.step.assign_add(1)
             if ep%save_freq==0:
@@ -369,11 +370,70 @@ class EvolutionalDNN:
 
         return loss_data
 
+ # For training real part of the EDNN at initial time on a batch of data. 
+    @tf.function
+    def training_step_real(self, X_batch, Y_batch):
+        with tf.GradientTape(persistent=True) as tape:
+            Ypred = self.output(X_batch)[0]
+            print(len(Ypred))
+            aux = [tf.reduce_mean(tf.square(Ypred[i] - Y_batch[i,0])) for i in range(len(Ypred))]
+            loss_data = tf.add_n(aux)
+            loss = loss_data
+        gradients_data = tape.gradient(loss_data,
+                    self.model.trainable_variables,
+                    unconnected_gradients=tf.UnconnectedGradients.ZERO)
+        del tape
+        gradients = [x for x in gradients_data]
+        self.optimizer.apply_gradients(zip(gradients,
+                    self.model.trainable_variables))
+
+        return loss_data
+
+ # For training imaginary part of the EDNN at initial time on a batch of data. 
+    @tf.function
+    def training_step_img(self, X_batch, Y_batch):
+        with tf.GradientTape(persistent=True) as tape:
+            Ypred = self.output(X_batch)[1]
+            aux = [tf.reduce_mean(tf.square(Ypred[i] - Y_batch[i,0])) for i in range(len(Ypred))]
+            loss_data = tf.add_n(aux)
+            loss = loss_data
+        gradients_data = tape.gradient(loss_data,
+                    self.model.trainable_variables,
+                    unconnected_gradients=tf.UnconnectedGradients.ZERO)
+        del tape
+        gradients = [x for x in gradients_data]
+        self.optimizer.apply_gradients(zip(gradients,
+                    self.model.trainable_variables))
+
+        return loss_data
+
     def print_status(self, ep, lu, verbose=False):
         """ Print status function """
 
         # Loss functions
         output_file = open(self.dest + 'output.dat', 'a')
+        print(ep, f'{lu}', 
+              file=output_file)
+        output_file.close()
+        if verbose:
+            print(ep, f'{lu}', f'{lf}')
+
+    def print_status_real(self, ep, lu, verbose=False):
+        """ Print status function real part """
+
+        # Loss functions
+        output_file = open(self.dest + 'output_real.dat', 'a')
+        print(ep, f'{lu}', 
+              file=output_file)
+        output_file.close()
+        if verbose:
+            print(ep, f'{lu}', f'{lf}')
+
+    def print_status_img(self, ep, lu, verbose=False):
+        """ Print status function imaginary part"""
+
+        # Loss functions
+        output_file = open(self.dest + 'output_img.dat', 'a')
         print(ep, f'{lu}', 
               file=output_file)
         output_file.close()
