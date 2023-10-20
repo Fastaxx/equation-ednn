@@ -46,13 +46,13 @@ def main():
     U = 2.0
     cu = 0.2
     cd = -1.0
-    mu0 = -0.38
+    mu0 = 0.38
     mu2 = -0.01
 
 
     Nt = 1000
     dt = 1e-2
-    tot_eps = 1000
+    tot_eps = 500
 
     # ------------------------------------------------------------------------------
     # Generate the collocation points and initial condition array

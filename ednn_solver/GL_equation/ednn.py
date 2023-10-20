@@ -337,16 +337,12 @@ class EvolutionalDNN:
     # a given neural network self.model 
     @tf.function
     def output(self, X):
-        with tf.GradientTape(persistent=True) as tape1:
-            tape1.watch(X)
-            X1 = tf.reshape(X[:,0],[-1,1])
-            X2 = tf.reshape(X[:,0],[-1,1])
-            XT = tf.concat([X1,X2],axis = 1)
-            Phi = self.model(XT)
-        dPhi = tape1.gradient(Phi,X)
-        U = dPhi[:,0]
-        V = dPhi[:,0]
-        del tape1
+        X1 = tf.reshape(X[:,0],[-1,1])
+        X2 = tf.reshape(X[:,0],[-1,1])
+        XT = tf.concat([X1,X2],axis = 1)
+        Phi = self.model(XT)
+        U = Phi[0][:,0]
+        V = Phi[0][:,1]
         U = tf.reshape(U,[-1])
         V = tf.reshape(V,[-1])
 
