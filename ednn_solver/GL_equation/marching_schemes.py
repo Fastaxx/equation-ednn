@@ -1,7 +1,5 @@
-# Yifan Du             dyifan1@jhu.edu
-# Tamer A. Zaki        t.zaki@jhu.edu
-# Johns Hokpins University
-# US patent submitted 03/08/2021
+# Louis Libat MSME - Gustave Eiffel
+# Adapté de Yifan Du Tamer A. Zaki (Johns Hokpins University)
 
 # Time marching functions for EDNN
 
