@@ -15,6 +15,7 @@ from ednn import EvolutionalDNN
 from marching_schemes import *
 from rhs import *
 from tensorflow.keras.optimizers.legacy import Adam
+import time
 
 # U is for the real part / V is for the imaginary part
 def Kflowinit(X):
@@ -39,8 +40,8 @@ def main():
     else:
         sys.exit("Wrong flag specified")
     # Physical domain
-    x1 = -10.0
-    x2 = 10
+    x1 = -20.0
+    x2 = 20
 
     # Other parameters
     U = 2.0
@@ -50,9 +51,9 @@ def main():
     mu2 = -0.01
 
 
-    Nt = 1000
+    Nt = 100
     dt = 1e-2
-    tot_eps = 500
+    tot_eps = 1000
 
     # ------------------------------------------------------------------------------
     # Generate the collocation points and initial condition array
@@ -70,11 +71,12 @@ def main():
     except OSError: 
         nrestart = 0
     
+
     # -----------------------------------------------------------------------------
     # Initialize EDNN
     # -----------------------------------------------------------------------------
-    lr = keras.optimizers.schedules.ExponentialDecay(1e-3, 10000000, 0.9)
-    layers  =[2] + 4*[20] + [2]
+    lr = keras.optimizers.schedules.ExponentialDecay(1e-0, 10000000, 0.9)
+    layers  =[2] + 3*[20] + [2]
     
     EDNN = EvolutionalDNN(layers,
                              rhs = rhs_gl, 
@@ -90,13 +92,16 @@ def main():
     
     if Initial: 
         t0 = time.time()
-        # Train the initial condition tot_eps epochs, 
+        # Train the initial condition tot_eps epochs,
+        start = time.time() 
         for i in range(tot_eps):
             EDNN.train(Input, InitU, InitV, epochs=1,
                    batch_size=100, verbose=False, timer=False)
         # Evaluate and output the initial condition 
         Input = tf.convert_to_tensor(Input)
         [U,V] = EDNN.output(Input)
+        end = time.time()
+        print(end - start)
         U = U.numpy().reshape(Nx)
         V = V.numpy().reshape(Nx)
         X.dump(case_name+'X')
