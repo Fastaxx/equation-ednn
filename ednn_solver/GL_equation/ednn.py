@@ -90,6 +90,10 @@ class EvolutionalDNN:
             self.act_fn = keras.activations.tanh
         elif activation=='relu':
             self.act_fn = keras.activations.relu
+        elif activation=='sigmoid':
+            self.act_fn = keras.activations.sigmoid
+        elif activation=='softplus':
+            self.act_fn = tf.keras.activations.softplus
         elif activation == 'adaptive_global':
             self.act_fn = AdaptiveAct()
 
@@ -337,9 +341,15 @@ class EvolutionalDNN:
     # a given neural network self.model 
     @tf.function
     def output(self, X):
-        X1 = tf.reshape(X[:,0],[-1,1])
-        X2 = tf.reshape(X[:,0],[-1,1])
-        XT = tf.concat([X1,X2],axis = 1)
+        k = tf.constant(np.pi)
+        sinX = tf.reshape(tf.sin(k/20*X[:,0]),[-1,1])
+        cosX = tf.reshape(tf.cos(k/20*X[:,0]),[-1,1])
+        XT = tf.concat([sinX,cosX],axis = 1)
+
+
+        #X1 = tf.reshape(X[:,0],[-1,1])
+        #X2 = tf.reshape(X[:,0],[-1,1])
+        #XT = tf.concat([X1,X2],axis = 1)
         Phi = self.model(XT)
         U = Phi[0][:,0]
         V = Phi[0][:,1]

@@ -14,7 +14,7 @@ from pdb import set_trace as keyboard
 from ednn import EvolutionalDNN
 from marching_schemes import *
 from rhs import *
-from tensorflow.keras.optimizers.legacy import Adam
+from tensorflow.keras.optimizers.legacy import Adam, SGD
 import time
 
 # U is for the real part / V is for the imaginary part
@@ -75,14 +75,14 @@ def main():
     # -----------------------------------------------------------------------------
     # Initialize EDNN
     # -----------------------------------------------------------------------------
-    lr = keras.optimizers.schedules.ExponentialDecay(1e-0, 10000000, 0.9)
+    lr = keras.optimizers.schedules.ExponentialDecay(1e-4, 10000000, 0.9)
     layers  =[2] + 3*[20] + [2]
     
     EDNN = EvolutionalDNN(layers,
                              rhs = rhs_gl, 
                              marching_method = Runge_Kutta,
                              dest=case_name,activation = 'tanh',
-                             optimizer=Adam(lr),
+                             optimizer=Adam(lr),    
                              eq_params=[U,cu,cd,mu0,mu2],
                              restore=True)
     print('Learning rate:', EDNN.optimizer._decayed_lr(tf.float32))
