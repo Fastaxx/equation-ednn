@@ -124,7 +124,7 @@ class EvolutionalDNN:
                                           for v in self.model.trainable_variables])
 
         # Can be modified from the outside before calling PINN.train
-
+        
         # Create save checkpoints / Load if existing previous
         self.ckpt    = tf.train.Checkpoint(step=tf.Variable(0),
                                            model=self.model,
@@ -296,6 +296,7 @@ class EvolutionalDNN:
                 Jn = np.concatenate(Jn,axis = 1)
                 JU[indEq] += [Jn]
         JJ = np.concatenate([np.concatenate(J, axis = 0) for J in JU],axis = 0)
+        
         dudt = self.rhs(self.output, Input, self.eq_params)[0]
         dudt = np.concatenate([e.numpy().flatten() for e in dudt])
 
@@ -305,7 +306,11 @@ class EvolutionalDNN:
         # Calculate the time derivative of network weights
         sol_real = np.linalg.lstsq(JJ,dudt,rcond = 1e-3)
         sol_img = np.linalg.lstsq(JJ,dvdt,rcond = 1e-3)
+        
         dwdt = sol_real[0]+sol_img[0]
+
+        dwdt_real = sol_real[0]
+        dwdt_real = sol_img[0]
 
         if w is not None:
             self.set_weights_np(wtmp)
@@ -341,15 +346,15 @@ class EvolutionalDNN:
     # a given neural network self.model 
     @tf.function
     def output(self, X):
-        k = tf.constant(np.pi)
-        sinX = tf.reshape(tf.sin(k/20*X[:,0]),[-1,1])
-        cosX = tf.reshape(tf.cos(k/20*X[:,0]),[-1,1])
-        XT = tf.concat([sinX,cosX],axis = 1)
+        #k = tf.constant(np.pi)
+        #sinX = tf.reshape(tf.sin(k/20*X[:,0]),[-1,1])
+        #cosX = tf.reshape(tf.cos(k/20*X[:,0]),[-1,1])
+        #XT = tf.concat([sinX,cosX],axis = 1)
 
 
-        #X1 = tf.reshape(X[:,0],[-1,1])
-        #X2 = tf.reshape(X[:,0],[-1,1])
-        #XT = tf.concat([X1,X2],axis = 1)
+        X1 = tf.reshape(X[:,0],[-1,1])
+        X2 = tf.reshape(X[:,0],[-1,1])
+        XT = tf.concat([X1,X2],axis = 1)
         Phi = self.model(XT)
         U = Phi[0][:,0]
         V = Phi[0][:,1]
