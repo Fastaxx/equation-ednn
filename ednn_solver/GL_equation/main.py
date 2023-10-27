@@ -53,7 +53,7 @@ def main():
 
     Nt = 1000
     dt = 1e-2
-    tot_eps = 1000
+    tot_eps = 10
 
     # ------------------------------------------------------------------------------
     # Generate the collocation points and initial condition array
@@ -66,6 +66,7 @@ def main():
     InitU = InitU.reshape(Nx,-1)
     InitV = InitV.reshape(Nx,-1)
     
+
     try: 
         nrestart = int(np.genfromtxt(case_name + 'nrestart'))
     except OSError: 

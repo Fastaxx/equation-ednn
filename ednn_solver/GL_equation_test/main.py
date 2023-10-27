@@ -73,11 +73,11 @@ def main():
     # Initialize EDNN
     # -----------------------------------------------------------------------------
     lr = keras.optimizers.schedules.ExponentialDecay(1e-3, 10000000, 0.9)
-    layers  =[1] + 3*[20] + [2]
+    layers  =[2] + 3*[20] + [2]
     
     EDNN = EvolutionalDNN(layers,
                              rhs = rhs_gl, 
-                             marching_method = Forward_Euler,
+                             marching_method = Runge_Kutta,
                              dest=case_name,activation = 'tanh',
                              optimizer=Adam(lr),    
                              eq_params=[U,cu,cd,mu0,mu2],

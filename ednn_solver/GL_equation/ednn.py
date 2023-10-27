@@ -123,6 +123,7 @@ class EvolutionalDNN:
         self.num_trainable_vars = np.sum([np.prod(v.shape)
                                           for v in self.model.trainable_variables])
 
+        #print('Model',model.summary())
         # Can be modified from the outside before calling PINN.train
         
         # Create save checkpoints / Load if existing previous
@@ -223,7 +224,7 @@ class EvolutionalDNN:
 
                 loss_data_real = self.training_step_real(X_batch_real, Y_batch_real)
                 loss_data_img = self.training_step_img(X_batch_img, Y_batch_img)
-                print (ep, ba, loss_data_real.numpy(), loss_data_img.numpy())
+                print ('ep :',ep,'ba :', ba,'loss_data_real :', loss_data_real.numpy(),'loss_data_img :', loss_data_img.numpy())
                 if timer:
                     print("Time per batch:", time.time()-t0)
                     if ba>10: timer = False
@@ -366,6 +367,24 @@ class EvolutionalDNN:
     # For training of the EDNN at initial time on a batch of data. 
     @tf.function
     def training_step(self, X_batch, Y_batch):
+        with tf.GradientTape(persistent=True) as tape:
+            Ypred = self.output(X_batch)
+            aux = [tf.reduce_mean(tf.square(Ypred[i] - Y_batch[:,i])) for i in range(len(Ypred))]
+            loss_data = tf.add_n(aux)
+            loss = loss_data
+        gradients_data = tape.gradient(loss_data,
+                    self.model.trainable_variables,
+                    unconnected_gradients=tf.UnconnectedGradients.ZERO)
+        del tape
+        gradients = [x for x in gradients_data]
+        self.optimizer.apply_gradients(zip(gradients,
+                    self.model.trainable_variables))
+
+        return loss_data
+
+    # For training of the EDNN at initial time on a batch of data. 
+    @tf.function
+    def training_step_gl(self, X_batch, Y_batch):
         with tf.GradientTape(persistent=True) as tape:
             Ypred = self.output(X_batch)
             aux = [tf.reduce_mean(tf.square(Ypred[i] - Y_batch[:,i])) for i in range(len(Ypred))]
