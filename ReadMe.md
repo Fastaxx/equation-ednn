@@ -17,3 +17,11 @@ Ce nouvel usage des réseaux de neurones est au centre des problématiques actue
 ## Références
 - Bagheri, S., D. S. Henningson, J. Hoepffner, and P. J. Schmid. 2009. “Input-Output Analysis and Control Design Applied to a Linear Model of Spatially Developing Flows.” Applied Mechanics Reviews.
 - Du, Y., and T. A. Zaki. 2021. “Evolutional Deep Neural Network.” Physical Review E.
+
+## Arborescence
+
+### ./docs
+Les références du projets
+
+### ./ednn_solver
+Le projet
