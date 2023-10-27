@@ -1,4 +1,8 @@
 # EDNN
+Le répertoire de travail.
+
+## Arborescence
+Les dossiers contiennent différentes implémentation d'EDP
 
 1. Add related folder
 2. Train NN on initial condition : `python main.py 0`
