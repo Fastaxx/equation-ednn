@@ -17,11 +17,9 @@ from rhs import *
 from tensorflow.keras.optimizers.legacy import Adam, SGD
 import time
 
-# U is for the real part / V is for the imaginary part
 def Kflowinit(X):
-    U =   np.exp(-X*X)
-    V =   np.exp(-X*X)
-    return [U,V]
+    Y =   np.exp(-X*X)
+    return Y
 
 def main():
     # -----------------------------------------------------------------------------
@@ -53,7 +51,7 @@ def main():
 
     Nt = 1000
     dt = 1e-2
-    tot_eps = 10
+    tot_eps = 4000
 
     # ------------------------------------------------------------------------------
     # Generate the collocation points and initial condition array
@@ -62,10 +60,8 @@ def main():
     Input = X.reshape(Nx,-1)
 
     #Initial condition
-    InitU, InitV = Kflowinit(X)
-    InitU = InitU.reshape(Nx,-1)
-    InitV = InitV.reshape(Nx,-1)
-    
+    Init = Kflowinit(X)
+    Init = Init.reshape(Nx,-1)    
 
     try: 
         nrestart = int(np.genfromtxt(case_name + 'nrestart'))
@@ -76,8 +72,8 @@ def main():
     # -----------------------------------------------------------------------------
     # Initialize EDNN
     # -----------------------------------------------------------------------------
-    lr = keras.optimizers.schedules.ExponentialDecay(1e-4, 10000000, 0.9)
-    layers  =[2] + 3*[20] + [2]
+    lr = keras.optimizers.schedules.ExponentialDecay(1e-3, 10000000, 0.9)
+    layers  =[1] + 4*[20] + [2]
     
     EDNN = EvolutionalDNN(layers,
                              rhs = rhs_gl, 
@@ -96,7 +92,7 @@ def main():
         # Train the initial condition tot_eps epochs,
         start = time.time() 
         for i in range(tot_eps):
-            EDNN.train(Input, InitU, InitV, epochs=1,
+            EDNN.train(Input, Init, epochs=1,
                    batch_size=100, verbose=False, timer=False)
         # Evaluate and output the initial condition 
         Input = tf.convert_to_tensor(Input)

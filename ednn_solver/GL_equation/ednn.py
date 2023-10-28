@@ -136,7 +136,7 @@ class EvolutionalDNN:
 
 
     def train(self,
-              X_data, Y_data_real, Y_data_img,
+              X_data, Y_data,
               epochs, batch_size,
               flags=None,
               rnd_order_training=True,
@@ -198,33 +198,23 @@ class EvolutionalDNN:
             for ba in range(batches):
 
                 # Create batches and cast to TF objects
-                (X_batch_real,
-                 Y_batch_real) = get_mini_batch(X_data,
-                                          Y_data_real,
-                                          ba,
-                                          batches,
-                                          flag_idxs,
-                                          random=rnd_order_training)
-                (X_batch_img,
-                 Y_batch_img) = get_mini_batch(X_data,
-                                          Y_data_img,
+                (X_batch,
+                 Y_batch) = get_mini_batch(X_data,
+                                          Y_data,
                                           ba,
                                           batches,
                                           flag_idxs,
                                           random=rnd_order_training)
 
-                X_batch_real = tf.convert_to_tensor(X_batch_real)
-                X_batch_img = tf.convert_to_tensor(X_batch_img)
-                Y_batch_real = tf.convert_to_tensor(Y_batch_real)
-                Y_batch_img = tf.convert_to_tensor(Y_batch_img)
+                X_batch = tf.convert_to_tensor(X_batch)
+                Y_batch = tf.convert_to_tensor(Y_batch)
                 ba_counter = tf.constant(ba)
 
                 if timer: 
                     t0 = time.time()
 
-                loss_data_real = self.training_step_real(X_batch_real, Y_batch_real)
-                loss_data_img = self.training_step_img(X_batch_img, Y_batch_img)
-                print ('ep :',ep,'ba :', ba,'loss_data_real :', loss_data_real.numpy(),'loss_data_img :', loss_data_img.numpy())
+                loss_data = self.training_step_gl(X_batch, Y_batch)
+                print ('ep :',ep,'ba :', ba,'loss_data :', loss_data.numpy())
                 if timer:
                     print("Time per batch:", time.time()-t0)
                     if ba>10: timer = False
@@ -232,10 +222,7 @@ class EvolutionalDNN:
            # Print status
             if ep%print_freq==0:
                 self.print_status_real(ep,
-                                  loss_data_real,
-                                  verbose=verbose)
-                self.print_status_img(ep,
-                                  loss_data_img,
+                                  loss_data,
                                   verbose=verbose)
             #Save progress
             self.ckpt.step.assign_add(1)
@@ -285,23 +272,23 @@ class EvolutionalDNN:
             wtmp = self.get_weights_np()
             self.set_weights_np(w)
         #Number of equations. Hardcoded
-        JU = [[]] + [[]]
+        Ju = []
         #Calculate the Jacobian on nbatch data sets.
         for x in range(int(len(Input)/nbatch)):
-            Jacobian = self.eval_NN_grad(tf.reshape(Input[x*nbatch:(x+1)*nbatch,:],[-1,2]))
-            for J, indEq in zip(Jacobian, range(len(JU))):
-                indk = [i for i in range(len(J))][::2]
-                indb = [i for i in range(len(J))][1::2]
-                Jn = [j.numpy() for j in J]
-                Jn = [jn.reshape(jn.shape[0],-1) for jn in Jn]
-                Jn = np.concatenate(Jn,axis = 1)
-                JU[indEq] += [Jn]
-        JJ = np.concatenate([np.concatenate(J, axis = 0) for J in JU],axis = 0)
-        
-        dudt = self.rhs(self.output, Input, self.eq_params)[0]
-        dudt = np.concatenate([e.numpy().flatten() for e in dudt])
+            JUV = self.eval_NN_grad(tf.reshape(Input[x*nbatch:(x+1)*nbatch,:],[nbatch,-1]))
+            J = JUV[0]
+            indk = [i for i in range(len(J))][::2]
+            indb = [i for i in range(len(J))][1::2]
+            Jn = [j.numpy() for j in J]
+            Jn = [jn.reshape(jn.shape[0],-1) for jn in Jn]
+            Jn = np.concatenate(Jn,axis = 1)
+            Ju = Ju + [Jn]
 
-        dvdt = self.rhs(self.output, Input, self.eq_params)[1]
+        Ju = np.concatenate(Ju,axis = 0)
+        JJ = Ju
+
+        dudt,dvdt = self.rhs(self.output, Input, self.eq_params)
+        dudt = np.concatenate([e.numpy().flatten() for e in dudt])
         dvdt = np.concatenate([e.numpy().flatten() for e in dvdt])
 
         # Calculate the time derivative of network weights
@@ -352,11 +339,8 @@ class EvolutionalDNN:
         #cosX = tf.reshape(tf.cos(k/20*X[:,0]),[-1,1])
         #XT = tf.concat([sinX,cosX],axis = 1)
 
-
-        X1 = tf.reshape(X[:,0],[-1,1])
-        X2 = tf.reshape(X[:,0],[-1,1])
-        XT = tf.concat([X1,X2],axis = 1)
-        Phi = self.model(XT)
+        XT = tf.reshape(X[:,0],[-1,1])
+        Phi = self.model(X)
         U = Phi[0][:,0]
         V = Phi[0][:,1]
         U = tf.reshape(U,[-1])
@@ -386,8 +370,12 @@ class EvolutionalDNN:
     @tf.function
     def training_step_gl(self, X_batch, Y_batch):
         with tf.GradientTape(persistent=True) as tape:
-            Ypred = self.output(X_batch)
-            aux = [tf.reduce_mean(tf.square(Ypred[i] - Y_batch[:,i])) for i in range(len(Ypred))]
+            Ypred_real = self.output(X_batch)[0]
+            Ypred_img = self.output(X_batch)[1]
+            # Je prends n'importe lequel puisque que Init est identique pour chaque
+            aux_real = [tf.reduce_mean(tf.square(Ypred_real[i] - Y_batch[i,:])) for i in range(len(Ypred_real))]
+            aux_img = [tf.reduce_mean(tf.square(Ypred_img[i] - Y_batch[i,:])) for i in range(len(Ypred_img))]
+            aux = aux_real+aux_img
             loss_data = tf.add_n(aux)
             loss = loss_data
         gradients_data = tape.gradient(loss_data,
