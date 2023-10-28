@@ -346,14 +346,9 @@ class EvolutionalDNN:
     @tf.function
     def output(self, X):
         k = tf.constant(np.pi)
-        sinX = tf.reshape(tf.sin(k/10*X[:,0]),[-1,1])
-        cosX = tf.reshape(tf.cos(k/10*X[:,0]),[-1,1])
+        sinX = tf.reshape(tf.sin(k/40*X[:,0]),[-1,1])
+        cosX = tf.reshape(tf.cos(k/40*X[:,0]),[-1,1])
         XT = tf.concat([sinX,cosX],axis = 1)
-
-
-        # X1 = tf.reshape(X[:,0],[-1,1])
-        # X2 = tf.reshape(X[:,0],[-1,1])
-        # XT = tf.concat([X1,X2],axis = 1)
         Phi = self.model(XT)
         U = Phi[0][:,0]
         V = Phi[0][:,1]

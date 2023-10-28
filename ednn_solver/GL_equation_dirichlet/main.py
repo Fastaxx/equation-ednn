@@ -54,7 +54,7 @@ def main():
 
     Nt = 1000
     dt = 1e-2
-    tot_eps = 10000
+    tot_eps = 100
 
     # ------------------------------------------------------------------------------
     # Generate the collocation points and initial condition array
@@ -62,19 +62,16 @@ def main():
     X  = np.linspace(x1,x2,num=Nx, dtype=np.float32)
     Xi = X[1:-1]
 
-    usq,vsq = Kflowinit(Xi)
-    u = usq.reshape((Nx-2),1)
-    v = vsq.reshape((Nx-2),1)
+    u,v = Kflowinit(Xi)
 
     Input = X.reshape(Nx,-1)
     InputInterior = Xi.reshape((Nx-2),-1)
-    InitU = u.reshape((Nx-2),-1)
-    InitV = v.reshape((Nx-2),-1)
+    Init = u.reshape((Nx-2),-1)
 
     Index = np.arange(Nx).reshape(Nx)
     IE = (0.0 * Index + Index[-1]).astype(int).reshape((Nx),-1)
     IW = (0.0 * Index + Index[0]).astype(int).reshape((Nx),-1)
-    BI = np.concatenate((IW,IE),axis = 1)
+    BI = np.concatenate((IE,IW),axis = 1)
 
     #Extract the index of boundary points for the enforcement of B.C. 
     IEInterior = (0.0 * Index[1:-1] + Index[-1]).astype(int).reshape((Nx-2),-1)
@@ -89,8 +86,8 @@ def main():
     # -----------------------------------------------------------------------------
     # Initialize EDNN
     # -----------------------------------------------------------------------------
-    lr = keras.optimizers.schedules.ExponentialDecay(1e-4, 10000000, 0.9)
-    layers  =[2] + 3*[20] + [2]
+    lr = keras.optimizers.schedules.ExponentialDecay(1e-3, 10000000, 0.9)
+    layers  =[2] + 4*[20] + [2]
     
     EDNN = EvolutionalDNN(layers,
                              rhs = rhs_gl, 
@@ -111,7 +108,7 @@ def main():
         for i in range(tot_eps):
             InputInteriorBoundary = Input[BIInterior]
             #print(InputInterior.shape)
-            EDNN.train(InputInterior, InputInteriorBoundary, InitU, InitV, epochs=1,
+            EDNN.train(InputInterior, InputInteriorBoundary, Init, epochs=1,
                    batch_size=100, verbose=False, timer=False)
         # Evaluate and output the initial condition 
         InputBoundary = tf.convert_to_tensor(Input[BI])

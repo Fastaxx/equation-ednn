@@ -109,7 +109,7 @@ def rhs_Burgers(output, coords, params):
 
 #  RHS of GL equation. 
 @tf.function
-def rhs_gl(output, coords, params):
+def rhs_gl(output, coords,coords_boundary, params):
     # params[0] : U
     # params[1] : cu
     # params[2] : cd
@@ -119,7 +119,7 @@ def rhs_gl(output, coords, params):
         tape2.watch(coords)
         with tf.GradientTape(persistent=True) as tape1:
             tape1.watch(coords)
-            [U,V] = output(coords)
+            [U,V] = output(coords,coords_boundary)
         dU = tape1.gradient(U,coords)
         dV = tape1.gradient(V,coords)
         dUdX = dU[:,0]

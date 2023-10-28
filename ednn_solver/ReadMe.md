@@ -4,10 +4,6 @@ Le répertoire de travail.
 ## Arborescence
 Les dossiers contiennent différentes implémentation d'EDP
 
-1. Add related folder
-2. Train NN on initial condition : `python main.py 0`
-3. March NN through time space : `python main.py 1`
-
 ## Installation
 1. Clone 
 `git clone`
@@ -17,6 +13,10 @@ Les dossiers contiennent différentes implémentation d'EDP
 3. `pip install -r requirements.txt`
 
 4. Use code
+
+## Fonctionnement
+1. Train NN on initial condition : `python main.py 0`
+2. March NN through time space : `python main.py 1`
 
 ## Settings
 

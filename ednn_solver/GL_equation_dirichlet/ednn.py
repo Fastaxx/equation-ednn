@@ -113,12 +113,12 @@ class EvolutionalDNN:
         # Output definition
         fields = keras.layers.Dense(self.dout, name='fields')(hidden)
 
-        cte   = keras.layers.Lambda(lambda x: 0*x[:,0:1]+1)(coords)
-        dummy = keras.layers.Dense(1, use_bias=False)(cte)
-        self.inv_outputs = [dummy]
+        # cte   = keras.layers.Lambda(lambda x: 0*x[:,0:1]+1)(coords)
+        # dummy = keras.layers.Dense(1, use_bias=False)(cte)
+        # self.inv_outputs = [dummy]
 
         # Create model
-        model = keras.Model(inputs=coords, outputs=[fields]+self.inv_outputs) #+self.inv_outputs
+        model = keras.Model(inputs=coords, outputs=[fields]) #+self.inv_outputs
         self.model = model
         self.num_trainable_vars = np.sum([np.prod(v.shape)
                                           for v in self.model.trainable_variables])
@@ -135,7 +135,7 @@ class EvolutionalDNN:
 
 
     def train(self,
-              X_data, X_boundary, Y_data_real, Y_data_img,
+              X_data, X_boundary, Y_data,
               epochs, batch_size,
               flags=None,
               rnd_order_training=True,
@@ -197,50 +197,35 @@ class EvolutionalDNN:
             for ba in range(batches):
 
                 # Create batches and cast to TF objects
-                (X_batch_real,
-                 X_boundary_real_batch,
-                 Y_batch_real) = get_mini_batch(X_data,
+                (X_batch,
+                 X_boundary_batch,
+                 Y_batch) = get_mini_batch(X_data,
                                           X_boundary,
-                                          Y_data_real,
+                                          Y_data,
                                           ba,
                                           batches,
                                           flag_idxs,
                                           random=rnd_order_training)
-                (X_batch_img,
-                 X_boundary_img_batch,
-                 Y_batch_img) = get_mini_batch(X_data,
-                                          X_boundary,
-                                          Y_data_img,
-                                          ba,
-                                          batches,
-                                          flag_idxs,
-                                          random=rnd_order_training)
+            
 
-                X_batch_real = tf.convert_to_tensor(X_batch_real)
-                X_batch_img = tf.convert_to_tensor(X_batch_img)
-                X_boundary_real_batch = tf.convert_to_tensor(X_boundary_real_batch)
-                X_boundary_img_batch = tf.convert_to_tensor(X_boundary_img_batch)
-                Y_batch_real = tf.convert_to_tensor(Y_batch_real)
-                Y_batch_img = tf.convert_to_tensor(Y_batch_img)
+                X_batch = tf.convert_to_tensor(X_batch)
+                X_boundary_batch=tf.convert_to_tensor(X_boundary_batch)
+                Y_batch = tf.convert_to_tensor(Y_batch)
                 ba_counter = tf.constant(ba)
 
                 if timer: 
                     t0 = time.time()
 
-                loss_data_real = self.training_step_real(X_batch_real,X_boundary_real_batch, Y_batch_real)
-                loss_data_img = self.training_step_img(X_batch_img,X_boundary_img_batch, Y_batch_img)
-                print (ep, ba, loss_data_real.numpy(), loss_data_img.numpy())
+                loss_data = self.training_step_gl(X_batch, X_boundary_batch, Y_batch)
+                print ('ep :',ep,'ba :', ba,'loss_data :', loss_data.numpy())
                 if timer:
                     print("Time per batch:", time.time()-t0)
                     if ba>10: timer = False
 
            # Print status
             if ep%print_freq==0:
-                self.print_status_real(ep,
-                                  loss_data_real,
-                                  verbose=verbose)
-                self.print_status_img(ep,
-                                  loss_data_img,
+                self.print_status(ep,
+                                  loss_data,
                                   verbose=verbose)
             #Save progress
             self.ckpt.step.assign_add(1)
@@ -295,7 +280,7 @@ class EvolutionalDNN:
         JU = [[]] + [[]]
         #Calculate the Jacobian on nbatch data sets.
         for x in range(int(len(Input)/nbatch)):
-            Jacobian = self.eval_NN_grad(tf.reshape(Input[x*nbatch:(x+1)*nbatch,:],[-1,2]),tf.reshape(Input_boundary[x*nbatch:(x+1)*nbatch,:],[-1,2,2]))
+            Jacobian = self.eval_NN_grad(tf.reshape(Input[x*nbatch:(x+1)*nbatch,:],[-1,2]),tf.reshape(Input_boundary[x*nbatch:(x+1)*nbatch,:],[-1,4,2]))
             for J, indEq in zip(Jacobian, range(len(JU))):
                 indk = [i for i in range(len(J))][::2]
                 indb = [i for i in range(len(J))][1::2]
@@ -312,6 +297,8 @@ class EvolutionalDNN:
         dvdt = np.concatenate([e.numpy().flatten() for e in dvdt])
 
         # Calculate the time derivative of network weights
+        print(JJ.shape)
+        print(dudt.shape)
         sol_real = np.linalg.lstsq(JJ,dudt,rcond = 1e-3)
         sol_img = np.linalg.lstsq(JJ,dvdt,rcond = 1e-3)
         
@@ -355,11 +342,13 @@ class EvolutionalDNN:
     def output(self, X, X_boundary):
         aeast = (X_boundary[:,0] - X)[:,0]
         awest = -(X_boundary[:,1] - X)[:,0]
+
         #print('aeast',aeast.shape)
         X1 = tf.reshape(X[:,0],[-1,1])
         X2 = tf.reshape(X[:,0],[-1,1])
         XT = tf.concat([X1,X2],axis = 1)
         output = self.model(XT)
+
         #print(self.model.summary())
         output_u = output[0]
         output_v = output[1]
@@ -372,23 +361,23 @@ class EvolutionalDNN:
         XWaux = tf.concat([tf.reshape(X_boundary[:,1,0],[len(X),1,1]),tf.reshape(X[:,0],[len(X),1,1])],axis = 2)
 
         X_boundary_aux = tf.concat([XEaux, XWaux], axis = 1)
-        #print(tf.reshape(X_boundary_aux,[-1,D3]))
+        # print(X_boundary_aux)
         output_boundary = self.model(tf.reshape(X_boundary_aux,[-1,D2]))
-        
+
+        Y_hat = output[0]
         output_boundary_u = output_boundary[0]
         output_boundary_v = output_boundary[1]
         
         #print('output_boundary_u',output_boundary_u)
         #print('output_boundary_v',output_boundary_v)
-        Y_hat = output[0]
 
         Y_boundary_pred = tf.reshape(output_boundary[0],[-1,D2])
 
         U_boundary_pred = tf.reshape(output_boundary_u,[-1,D2])
         V_boundary_pred = tf.reshape(output_boundary_v,[-1,D2])
 
-        #print('U_boundary_pred',U_boundary_pred)
-        #print('V_boundary_pred',V_boundary_pred)
+        # print('U_boundary_pred',U_boundary_pred)
+        # print('V_boundary_pred',V_boundary_pred)
 
         # B = (tf.reshape((awest) / (awest + aeast),(-1,1)) * tf.reshape(Y_boundary_pred[:,0],(-1,1))
         #     +  tf.reshape((aeast) / (aeast + awest),(-1,1)) * tf.reshape(Y_boundary_pred[:,1],(-1,1)) )
@@ -401,17 +390,15 @@ class EvolutionalDNN:
 
         Y_pred_real = output_u - B_real
         Y_pred_img = output_v - B_img
-        
-        # X1 = tf.reshape(X[:,0],[-1,1])
-        # X2 = tf.reshape(X[:,0],[-1,1])
-        # XT = tf.concat([X1,X2],axis = 1)
-        # Phi = self.model(XT)
-        # U = Phi[0][:,0]
-        # V = Phi[0][:,1]
-        # U = tf.reshape(U,[-1])
-        # V = tf.reshape(V,[-1])
+        # print('Y_pred_real',Y_pred_real)
+        # print('Y_pred_img',Y_pred_img)
 
-        return [Y_pred_real,Y_pred_img]
+        U = Y_pred_real[:,0]
+        V = Y_pred_img[:,1]
+        U = tf.reshape(U,[-1])
+        V = tf.reshape(V,[-1])
+        # print(U,V)
+        return [U,V]
 
     # For training of the EDNN at initial time on a batch of data. 
     @tf.function
@@ -419,6 +406,27 @@ class EvolutionalDNN:
         with tf.GradientTape(persistent=True) as tape:
             Ypred = self.output(X_batch,X_boundary_batch)[0]
             aux = [tf.reduce_mean(tf.square(Ypred[i] - Y_batch[:,i])) for i in range(len(Ypred))]
+            loss_data = tf.add_n(aux)
+            loss = loss_data
+        gradients_data = tape.gradient(loss_data,
+                    self.model.trainable_variables,
+                    unconnected_gradients=tf.UnconnectedGradients.ZERO)
+        del tape
+        gradients = [x for x in gradients_data]
+        self.optimizer.apply_gradients(zip(gradients,
+                    self.model.trainable_variables))
+
+        return loss_data
+
+    # For training of the EDNN at initial time on a batch of data. 
+    @tf.function
+    def training_step_gl(self, X_batch,X_boundary_batch, Y_batch):
+        with tf.GradientTape(persistent=True) as tape:
+            Ypred_real = self.output(X_batch,X_boundary_batch)[0]
+            Ypred_img = self.output(X_batch,X_boundary_batch)[1]
+            aux_real = [tf.reduce_mean(tf.square(Ypred_real[i] - Y_batch[i,:])) for i in range(len(Ypred_real))]
+            aux_img = [tf.reduce_mean(tf.square(Ypred_img[i] - Y_batch[i,:])) for i in range(len(Ypred_img))]
+            aux = aux_real+aux_img
             loss_data = tf.add_n(aux)
             loss = loss_data
         gradients_data = tape.gradient(loss_data,
