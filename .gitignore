@@ -1,9 +1,10 @@
+**/.DS_Store
+
 __pycache__/
 
 # Jupyter Notebook
 **/.ipynb_checkpoint/
 **/.ipynb_checkpoints/*.ipynb
-**/*.ipynb
 
 
 **/BurgersNN/
