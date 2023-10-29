@@ -6,6 +6,8 @@ Les dossiers contiennent différentes implémentation d'EDP
 - 1D_Burgers_Equation : Résolution de l'équation 1D de Burgers avec conditions périodiques
 - 2D_Navier_Stokes_Periodic : Résolution de l'équation 2D de Navier Stokes avec conditions périodiques
 - GL_Equation : Résolution de l'équation de Ginzburg-Landau complexe 1D sans conditions limites
+- GL_Equation_periodic : Résolution de l'équation de Ginzburg-Landau complexe 1D avec conditions périodiques
+
 
 ## Installation
 1. Clone 
