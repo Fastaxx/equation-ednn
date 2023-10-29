@@ -155,12 +155,8 @@ class EvolutionalDNN:
         X_data : ndarray
             Coordinates where the initial data are located. 
             Must have shape (:, din).
-        Y_data_real : ndarray
-            For real part, The initial data at the corresponding lodation. 
-            Must have shape (:, dout). First dimension must be the same as
-            X_data. 
-        Y_data_img : ndarray
-            For imaginary part, The initial data at the corresponding lodation. 
+        Y_data : ndarray
+            The initial data at the corresponding lodation. 
             Must have shape (:, dout). First dimension must be the same as
             X_data. 
         epochs : int
@@ -221,7 +217,7 @@ class EvolutionalDNN:
 
            # Print status
             if ep%print_freq==0:
-                self.print_status_real(ep,
+                self.print_status(ep,
                                   loss_data,
                                   verbose=verbose)
             #Save progress
@@ -272,33 +268,26 @@ class EvolutionalDNN:
             wtmp = self.get_weights_np()
             self.set_weights_np(w)
         #Number of equations. Hardcoded
-        Ju = []
+        Ju = [[]] + [[]]
         #Calculate the Jacobian on nbatch data sets.
         for x in range(int(len(Input)/nbatch)):
             JUV = self.eval_NN_grad(tf.reshape(Input[x*nbatch:(x+1)*nbatch,:],[nbatch,-1]))
-            J = JUV[0]
-            indk = [i for i in range(len(J))][::2]
-            indb = [i for i in range(len(J))][1::2]
-            Jn = [j.numpy() for j in J]
-            Jn = [jn.reshape(jn.shape[0],-1) for jn in Jn]
-            Jn = np.concatenate(Jn,axis = 1)
-            Ju = Ju + [Jn]
+            for J, indEq in zip(JUV, range(len(Ju))):
+                indk = [i for i in range(len(J))][::2]
+                indb = [i for i in range(len(J))][1::2]
+                Jn = [j.numpy() for j in J]
+                Jn = [jn.reshape(jn.shape[0],-1) for jn in Jn]
+                Jn = np.concatenate(Jn,axis = 1)
+                Ju[indEq] += [Jn]
+        JJ = np.concatenate([np.concatenate(J, axis = 0) for J in Ju],axis = 0)
 
-        Ju = np.concatenate(Ju,axis = 0)
-        JJ = Ju
-
-        dudt,dvdt = self.rhs(self.output, Input, self.eq_params)
+        dudt = self.rhs(self.output, Input, self.eq_params)
         dudt = np.concatenate([e.numpy().flatten() for e in dudt])
-        dvdt = np.concatenate([e.numpy().flatten() for e in dvdt])
 
         # Calculate the time derivative of network weights
-        sol_real = np.linalg.lstsq(JJ,dudt,rcond = 1e-3)
-        sol_img = np.linalg.lstsq(JJ,dvdt,rcond = 1e-3)
+        sol = np.linalg.lstsq(JJ,dudt,rcond = 1e-3)
         
-        dwdt = sol_real[0]+sol_img[0]
-
-        dwdt_real = sol_real[0]
-        dwdt_real = sol_img[0]
+        dwdt = sol[0]
 
         if w is not None:
             self.set_weights_np(wtmp)
@@ -372,46 +361,9 @@ class EvolutionalDNN:
         with tf.GradientTape(persistent=True) as tape:
             Ypred_real = self.output(X_batch)[0]
             Ypred_img = self.output(X_batch)[1]
-            # Je prends n'importe lequel puisque que Init est identique pour chaque
             aux_real = [tf.reduce_mean(tf.square(Ypred_real[i] - Y_batch[i,:])) for i in range(len(Ypred_real))]
             aux_img = [tf.reduce_mean(tf.square(Ypred_img[i] - Y_batch[i,:])) for i in range(len(Ypred_img))]
             aux = aux_real+aux_img
-            loss_data = tf.add_n(aux)
-            loss = loss_data
-        gradients_data = tape.gradient(loss_data,
-                    self.model.trainable_variables,
-                    unconnected_gradients=tf.UnconnectedGradients.ZERO)
-        del tape
-        gradients = [x for x in gradients_data]
-        self.optimizer.apply_gradients(zip(gradients,
-                    self.model.trainable_variables))
-
-        return loss_data
-
- # For training real part of the EDNN at initial time on a batch of data. 
-    @tf.function
-    def training_step_real(self, X_batch, Y_batch):
-        with tf.GradientTape(persistent=True) as tape:
-            Ypred = self.output(X_batch)[0]
-            aux = [tf.reduce_mean(tf.square(Ypred[i] - Y_batch[i,0])) for i in range(len(Ypred))]
-            loss_data = tf.add_n(aux)
-            loss = loss_data
-        gradients_data = tape.gradient(loss_data,
-                    self.model.trainable_variables,
-                    unconnected_gradients=tf.UnconnectedGradients.ZERO)
-        del tape
-        gradients = [x for x in gradients_data]
-        self.optimizer.apply_gradients(zip(gradients,
-                    self.model.trainable_variables))
-
-        return loss_data
-
- # For training imaginary part of the EDNN at initial time on a batch of data. 
-    @tf.function
-    def training_step_img(self, X_batch, Y_batch):
-        with tf.GradientTape(persistent=True) as tape:
-            Ypred = self.output(X_batch)[1]
-            aux = [tf.reduce_mean(tf.square(Ypred[i] - Y_batch[i,0])) for i in range(len(Ypred))]
             loss_data = tf.add_n(aux)
             loss = loss_data
         gradients_data = tape.gradient(loss_data,

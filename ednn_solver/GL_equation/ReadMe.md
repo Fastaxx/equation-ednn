@@ -58,4 +58,33 @@ avec $\nu = U+2i c_u$ et $\gamma =1+ic_d$ et $\mu=\mu_0-c_u^2$
 
 ## RHS
 
+```
+#  RHS of GL equation. 
+@tf.function
+def rhs_gl(output, coords, params):
+    # params[0] : U
+    # params[1] : cu
+    # params[2] : cd
+    # params[3] : mu0
+    # params[4] : mu2
+    with tf.GradientTape(persistent=True) as tape2:
+        tape2.watch(coords)
+        with tf.GradientTape(persistent=True) as tape1:
+            tape1.watch(coords)
+            [U,V] = output(coords)
+        dU = tape1.gradient(U,coords)
+        dV = tape1.gradient(V,coords)
+        dUdX = dU[:,0]
+        dVdX = dV[:,0]
+        del tape1
+    ddUdX = tape2.gradient(dUdX, coords)
+    ddVdX = tape2.gradient(dVdX, coords)
+    d2UdX2 = ddUdX[:,0]
+    d2VdX2 = ddVdX[:,0]
+    del tape2
+    rhs_real = (-params[0]*dUdX+d2UdX2)+(2*params[1]*dVdX-params[2]*d2VdX2)+(params[3]-params[4]**2+(params[4]/2)*coords[:,0]**2)*U
+    rhs_img =(-params[0]*dVdX+d2VdX2)+(-2*params[1]*dUdX+params[2]*d2UdX2)+(params[3]-params[4]**2+(params[4]/2)*coords[:,0]**2)*V
+    return [rhs_real,rhs_img]
+
+```
 
