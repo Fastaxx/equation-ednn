@@ -2,6 +2,7 @@ __pycache__/
 
 # Jupyter Notebook
 **/.ipynb_checkpoint/
+*/.ipynb_checkpoints/*.ipynb
 
 
 **/BurgersNN/
