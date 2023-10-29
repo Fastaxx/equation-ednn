@@ -319,8 +319,7 @@ class EvolutionalDNN:
         self.set_weights_np(W)
         return None
 
-    # A wrapper to enforce periodicity and incompressibility on 
-    # a given neural network self.model 
+    # A wrapper to enforce ... a given neural network self.model 
     @tf.function
     def output(self, X):
         #k = tf.constant(np.pi)
@@ -381,28 +380,6 @@ class EvolutionalDNN:
 
         # Loss functions
         output_file = open(self.dest + 'output.dat', 'a')
-        print(ep, f'{lu}', 
-              file=output_file)
-        output_file.close()
-        if verbose:
-            print(ep, f'{lu}', f'{lf}')
-
-    def print_status_real(self, ep, lu, verbose=False):
-        """ Print status function real part """
-
-        # Loss functions
-        output_file = open(self.dest + 'output_real.dat', 'a')
-        print(ep, f'{lu}', 
-              file=output_file)
-        output_file.close()
-        if verbose:
-            print(ep, f'{lu}', f'{lf}')
-
-    def print_status_img(self, ep, lu, verbose=False):
-        """ Print status function imaginary part"""
-
-        # Loss functions
-        output_file = open(self.dest + 'output_img.dat', 'a')
         print(ep, f'{lu}', 
               file=output_file)
         output_file.close()

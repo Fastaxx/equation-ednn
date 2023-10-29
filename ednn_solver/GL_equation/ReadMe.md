@@ -1,7 +1,7 @@
 # Solve Ginzburg-Landau equation with EDNN
 
 $$\frac{\partial q}{\partial t} = - \nu \frac{\partial q}{\partial x} + \gamma \frac{\partial^2 q}{\partial x^2} + \mu q$$
-avec $\nu = U+2i c_u$ et $\gamma =1+ic_d$ et $\mu=\mu_0-c_u^2$
+avec $\nu = U+2i c_u$ et $\gamma =1+ic_d$ et $\mu=\mu_0-c_u^2+\mu_2 \frac{x^2}{2}$
 
 1. Add related folder : ./GL_NN/
 2. Train NN on initial condition : `python main.py 0`
