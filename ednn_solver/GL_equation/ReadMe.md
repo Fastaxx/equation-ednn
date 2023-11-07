@@ -7,6 +7,7 @@ avec $\nu = U+2i c_u$ et $\gamma =1+ic_d$ et $\mu=\mu_0-c_u^2+\mu_2 \frac{x^2}{2
 2. Train NN on initial condition : `python main.py 0`
 3. March NN through time space : `python main.py 1`
 
+./param : multiple test with different configurations
 ## Installation
 1. Clone : `git clone`
 
@@ -28,6 +29,7 @@ avec $\nu = U+2i c_u$ et $\gamma =1+ic_d$ et $\mu=\mu_0-c_u^2+\mu_2 \frac{x^2}{2
 - Marching Method : Runge_Kutta, Forward_Euler
 - Activation function : tanh, relu, adaptive_global
 - Optimizer : Adam, SGD, ...
+- Loss Functions
 
 ## Model creation 
 
