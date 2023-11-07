@@ -261,7 +261,7 @@ class EvolutionalDNN:
             Y = self.output(X)
         gradients = [tape.jacobian(y,
                     self.model.trainable_variables,
-                    unconnected_gradients=tf.UnconnectedGradients.ZERO) for y in Y]
+                    unconnected_gradients=tf.UnconnectedGradients.ZERO) for y in Y] # Main computational cost of EDNN involves formation of the Jacobian matrix J 
         del tape
         return gradients
         
@@ -301,8 +301,9 @@ class EvolutionalDNN:
         dudt = np.concatenate([e.numpy().flatten() for e in dudt])
 
         # Calculate the time derivative of network weights
-        sol = np.linalg.lstsq(JJ,dudt,rcond = 1e-3)
-        
+        sol = np.linalg.lstsq(JJ,dudt,rcond = 1e-3) #Main computational cost of EDNN involves inverting the linear system JT J
+        #sol = tf.linalg.lstsq(JJ,dudt,l2_regularizer = 1e-3,fast=True)
+
         dwdt = sol[0]
 
         if w is not None:
@@ -376,9 +377,7 @@ class EvolutionalDNN:
         with tf.GradientTape(persistent=True) as tape:
             Ypred_real = self.output(X_batch)[0]
             Ypred_img = self.output(X_batch)[1]
-            #aux_real = [tf.reduce_mean(tf.square(Ypred_real[i] - Y_batch[i,:])) for i in range(len(Ypred_real))]
             aux_real = self.ls_fn(Ypred_real,Y_batch)
-            #aux_img = [tf.reduce_mean(tf.square(Ypred_img[i] - Y_batch[i,:])) for i in range(len(Ypred_img))]
             aux_img = self.ls_fn(Ypred_img,Y_batch)
             aux = aux_real+aux_img
             loss_data = tf.add_n(aux)

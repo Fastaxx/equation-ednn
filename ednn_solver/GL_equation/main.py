@@ -49,7 +49,7 @@ def main():
     mu2 = -0.01
 
 
-    Nt = 1000
+    Nt = 10
     dt = 1e-2
     tot_eps = 1000
 
@@ -81,7 +81,7 @@ def main():
                              dest=case_name,activation = 'relu',
                              optimizer=Adam(lr),    
                              eq_params=[U,cu,cd,mu0,mu2],
-                             loss_function='msle',
+                             loss_function='mse',
                              restore=True)
     print('Learning rate:', EDNN.optimizer._decayed_lr(tf.float32))
     
@@ -112,12 +112,15 @@ def main():
         nbatch = 100
         params_marching = [dt,nbatch]
         # March the EDNN class till Nt time steps. 
+        t0 = time.time()
         for n in range(nrestart+1,Nt):
             print('time step', n)
             EDNN.Marching(Input,params_marching)
 
             # The real and imaginary field is stored every time step.
             [U,V] = EDNN.output(Input)
+            end = time.time()
+            print(end-t0)
             U = U.numpy().reshape(Nx)
             V = V.numpy().reshape(Nx)
     
