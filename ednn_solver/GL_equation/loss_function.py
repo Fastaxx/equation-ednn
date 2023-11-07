@@ -16,20 +16,47 @@ from pdb import set_trace as keyboard
 # -----------------------------------------------------------------------------
 
 # MSE : differentiable
-mse = [tf.reduce_mean(tf.square(Ypred[i] - Y_batch[i,0])) for i in range(len(Ypred))]
+def mse_loss(Ypred,Y_batch):
+	"""
+	Compute the MSE Loss
+	"""
+	return [tf.reduce_mean(tf.square(Ypred[i] - Y_batch[i,:])) for i in range(len(Ypred))]
 
 # MAE : not differentiable at zero
-mae = [tf.reduce_mean(Ypred[i]-Y_batch[i,0]) for i in range(len(Ypred))]
+def mae_loss(Ypred,Y_batch):
+	"""
+	Compute the MAE Loss
+	"""
+	return [tf.reduce_mean(tf.abs(Ypred[i] - Y_batch[i,:])) for i in range(len(Ypred))]
 
 # RMSE : 
-rmse = [tf.sqrt(tf.reduce_mean(tf.square(Ypred[i] - Y_batch[i,0]))) for i in range(len(Ypred))]
+def rmse_loss(Ypred,Y_batch):
+	"""
+	Compute the RMSE Loss
+	"""
+	return [tf.sqrt(tf.reduce_mean(tf.square(Ypred[i] - Y_batch[i,:]))) for i in range(len(Ypred))]
 
 # MSLE : 
-msle = [tf.reduce_mean(tf.square(tf.math.log(Y_batch[i,0]+1)-tf.math.log(Ypred[i]+1))) for i in range(len(Ypred))]
+def msle_loss(Ypred,Y_batch):
+	"""
+	Compute the MSLE Loss
+	"""
+	return [tf.reduce_mean(tf.square(tf.math.log1p(Ypred[i])-tf.math.log1p(Y_batch[i,:]))) for i in range(len(Ypred))]
 
 # Log Cosh Loss :
-logcosh = [tf.reduce_mean(tf.math.log(tf.math.cosh(Ypred[i]-Y_batch[i,0]))) for i in range(len(Ypred))]
+def logcosh_loss(Ypred,Y_batch):
+	"""
+	Compute the Log-Cosh Loss
+	"""
+	return [tf.reduce_mean(tf.math.log(tf.math.cosh(Ypred[i]-Y_batch[i,:]))) for i in range(len(Ypred))]
 
-# Modified Cosine Similarity : 
-cossim = [tf.reduce_mean(tf.sqrt(tf.reduce_sum(tf.square(Ypred[i]))) * tf.sqrt(tf.reduce_sum(tf.square(Y_batch[i,0])))) for i in range(len(Ypred))]
+# MAPE Loss :
+def mape_loss(Ypred,Y_batch):
+	"""
+	Compute the MAPE Loss
+	"""
+	return [100*tf.reduce_mean(tf.abs(Ypred[i] - Y_batch[i,:])/(Y_batch[i,:]+tf.keras.backend.epsilon())) for i in range(len(Ypred))]
+
+
+
 
