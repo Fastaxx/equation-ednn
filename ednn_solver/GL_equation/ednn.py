@@ -12,6 +12,7 @@ import tensorflow as tf
 from   tensorflow import keras
 import time
 from pdb import set_trace as keyboard
+from loss_function import *
 from tensorflow.keras.optimizers.legacy import Adam
 
 #tf.config.experimental_run_functions_eagerly(True)
@@ -63,6 +64,7 @@ class EvolutionalDNN:
                  layers,
                  rhs,
                  marching_method, 
+                 loss_function,
                  dest='./',
                  activation='tanh',
                  optimizer=Adam(learning_rate=5e-4),
@@ -96,6 +98,20 @@ class EvolutionalDNN:
             self.act_fn = tf.keras.activations.softplus
         elif activation == 'adaptive_global':
             self.act_fn = AdaptiveAct()
+
+        # Loss function
+        if loss_function=='mse':
+            self.ls_fn = mse_loss
+        elif loss_function=='mae':
+            self.ls_fn = mae_loss
+        elif loss_function=='rmse':
+            self.ls_fn = rmse_loss
+        elif loss_function=='msle':
+            self.ls_fn = msle_loss
+        elif loss_function=='logcosh':
+            self.ls_fn = logcosh_loss
+        elif loss_function=='mape':
+            self.ls_fn = mape_loss
 
         # Input definition
         coords = keras.layers.Input(self.din, name='coords')
@@ -360,8 +376,10 @@ class EvolutionalDNN:
         with tf.GradientTape(persistent=True) as tape:
             Ypred_real = self.output(X_batch)[0]
             Ypred_img = self.output(X_batch)[1]
-            aux_real = [tf.reduce_mean(tf.square(Ypred_real[i] - Y_batch[i,:])) for i in range(len(Ypred_real))]
-            aux_img = [tf.reduce_mean(tf.square(Ypred_img[i] - Y_batch[i,:])) for i in range(len(Ypred_img))]
+            #aux_real = [tf.reduce_mean(tf.square(Ypred_real[i] - Y_batch[i,:])) for i in range(len(Ypred_real))]
+            aux_real = self.ls_fn(Ypred_real,Y_batch)
+            #aux_img = [tf.reduce_mean(tf.square(Ypred_img[i] - Y_batch[i,:])) for i in range(len(Ypred_img))]
+            aux_img = self.ls_fn(Ypred_img,Y_batch)
             aux = aux_real+aux_img
             loss_data = tf.add_n(aux)
             loss = loss_data

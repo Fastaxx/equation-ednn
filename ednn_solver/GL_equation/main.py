@@ -73,7 +73,7 @@ def main():
     # Initialize EDNN
     # -----------------------------------------------------------------------------
     lr = keras.optimizers.schedules.ExponentialDecay(1e-3, 10000000, 0.9)
-    layers  =[1] + 4*[60] + [2]
+    layers  =[1] + 4*[30] + [2]
     
     EDNN = EvolutionalDNN(layers,
                              rhs = rhs_gl, 
@@ -81,6 +81,7 @@ def main():
                              dest=case_name,activation = 'relu',
                              optimizer=Adam(lr),    
                              eq_params=[U,cu,cd,mu0,mu2],
+                             loss_function='msle',
                              restore=True)
     print('Learning rate:', EDNN.optimizer._decayed_lr(tf.float32))
     
