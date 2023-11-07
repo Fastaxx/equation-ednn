@@ -37,11 +37,11 @@ def main():
         Initial = False
     else:
         sys.exit("Wrong flag specified")
-    # Physical domain
+    # Domaine physique
     x1 = -20.0
     x2 = 20
 
-    # Other parameters
+    # Autre paramètres
     U = 2.0
     cu = 0.2
     cd = -1.0
@@ -73,12 +73,12 @@ def main():
     # Initialize EDNN
     # -----------------------------------------------------------------------------
     lr = keras.optimizers.schedules.ExponentialDecay(1e-3, 10000000, 0.9)
-    layers  =[1] + 4*[20] + [2]
+    layers  =[1] + 4*[60] + [2]
     
     EDNN = EvolutionalDNN(layers,
                              rhs = rhs_gl, 
                              marching_method = Forward_Euler,
-                             dest=case_name,activation = 'tanh',
+                             dest=case_name,activation = 'relu',
                              optimizer=Adam(lr),    
                              eq_params=[U,cu,cd,mu0,mu2],
                              restore=True)
