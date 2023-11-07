@@ -107,7 +107,7 @@ def rhs_Burgers(output, coords, params):
     rhs = -u*dudx + nu *  d2udx2
     return rhs
 
-#  RHS of GL equation. 
+#  RHS of GL equation. # main computational cost of EDNN involves automatic differentiation of the network outputs to evaluate the equation operator Nx(u)
 @tf.function
 def rhs_gl(output, coords, params):
     # params[0] : U
