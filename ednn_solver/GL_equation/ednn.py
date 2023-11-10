@@ -287,7 +287,9 @@ class EvolutionalDNN:
         Ju = [[]] + [[]]
         #Calculate the Jacobian on nbatch data sets.
         for x in range(int(len(Input)/nbatch)):
+            t1 = time.time()
             JUV = self.eval_NN_grad(tf.reshape(Input[x*nbatch:(x+1)*nbatch,:],[nbatch,-1]))
+            print('Durée jacobian :', time.time()-t1)
             for J, indEq in zip(JUV, range(len(Ju))):
                 indk = [i for i in range(len(J))][::2]
                 indb = [i for i in range(len(J))][1::2]
@@ -297,12 +299,16 @@ class EvolutionalDNN:
                 Ju[indEq] += [Jn]
         JJ = np.concatenate([np.concatenate(J, axis = 0) for J in Ju],axis = 0)
 
+        t2 = time.time()
         dudt = self.rhs(self.output, Input, self.eq_params)
+        print('Durée RHS :', time.time()-t2)
         dudt = np.concatenate([e.numpy().flatten() for e in dudt])
 
         # Calculate the time derivative of network weights
+        t3 = time.time()
         sol = np.linalg.lstsq(JJ,dudt,rcond = 1e-3) #Main computational cost of EDNN involves inverting the linear system JT J
-        #sol = tf.linalg.lstsq(JJ,dudt,l2_regularizer = 1e-3,fast=True)
+        print('Durée Inverse JJ :', time.time()-t3)
+        print('Conditionnement Matrice JJ :', np.linalg.cond(JJ))
 
         dwdt = sol[0]
 
@@ -375,8 +381,9 @@ class EvolutionalDNN:
     @tf.function
     def training_step_gl(self, X_batch, Y_batch):
         with tf.GradientTape(persistent=True) as tape:
-            Ypred_real = self.output(X_batch)[0]
-            Ypred_img = self.output(X_batch)[1]
+            Ypred = self.output(X_batch)
+            Ypred_real = Ypred[0]
+            Ypred_img = Ypred[1]
             aux_real = self.ls_fn(Ypred_real,Y_batch)
             aux_img = self.ls_fn(Ypred_img,Y_batch)
             aux = aux_real+aux_img

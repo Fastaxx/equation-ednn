@@ -1,0 +1,13 @@
+#activ	time_train	time_march	erreur_initiale_real	erreur_initial_img
+1	85.8265	60.5130	1.1246907e-05	1.4196786e-05
+2	87.2771	59.3393	0.00014808387	0.00014650822
+3	95.1968	65.0677	8.08921e-06	8.427278e-06
+4	89.1530	65.9872	5.171126e-06	7.988806e-06	
+5	96.8865	87.4444	0.014870456	0.014896362
+
+#1000 epochs train - 10 time step march - 1000 collocations points
+#1-Grid
+#2-Uniform_Random
+#3-LHS
+#4-Sobol
+#5-Triangular

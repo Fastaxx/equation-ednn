@@ -1,6 +1,0 @@
-#activ	time	
-0	69.84
-
-#10 iterations
-#0-np.linalg.lstsq
-#1-
