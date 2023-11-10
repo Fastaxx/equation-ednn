@@ -1,0 +1,9 @@
+#activ	time_iter1	time_after	time_iter1_p	time_after_p	
+0	2.0772	0.14	23.63	2.489
+1	0.9896	0.0031	11.26	0.055
+2	5.7231	5.4810	64.77	97.456
+
+#10 iteration - Batch 10
+#0-Jacobian
+#1-RHS
+#2-Inverse JJ

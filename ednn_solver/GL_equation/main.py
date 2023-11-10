@@ -12,6 +12,7 @@ import time
 import sys
 from pdb import set_trace as keyboard
 from ednn import EvolutionalDNN
+from distribution import *
 from marching_schemes import *
 from rhs import *
 from tensorflow.keras.optimizers.legacy import Adam, SGD
@@ -56,7 +57,8 @@ def main():
     # ------------------------------------------------------------------------------
     # Generate the collocation points and initial condition array
     # ------------------------------------------------------------------------------
-    X  = np.linspace(x1,x2,num=Nx, dtype=np.float32)
+    X = grid_distribution(x1,x2,Nx)
+    #X  = np.linspace(x1,x2,num=Nx, dtype=np.float32)
     Input = X.reshape(Nx,-1)
 
     #Initial condition
@@ -87,7 +89,8 @@ def main():
     
     #print('Learning rate:', PINN.optimizer._decayed_lr(tf.float32))
     
-    
+    print("Num GPUs Available: ", tf.config.list_physical_devices('CPU'))
+
     if Initial: 
         t0 = time.time()
         # Train the initial condition tot_eps epochs,
