@@ -29,7 +29,7 @@ def main():
     # NN and solution directory
     case_name = "GL_NN/"
     # Numer of collocation points
-    Nx = 1000
+    Nx = 500
     # if Initial == True, train the neural network for initial condition
     # if Initial == False, march the initial network stored in case_name
     if sys.argv[1] == '0':
@@ -57,7 +57,7 @@ def main():
     # ------------------------------------------------------------------------------
     # Generate the collocation points and initial condition array
     # ------------------------------------------------------------------------------
-    X = sobol_distribution(x1,x2,Nx)
+    X = grid_distribution(x1,x2,Nx)
     #X  = np.linspace(x1,x2,num=Nx, dtype=np.float32)
     Input = X.reshape(Nx,-1)
 
@@ -80,7 +80,7 @@ def main():
     EDNN = EvolutionalDNN(layers,
                              rhs = rhs_gl, 
                              marching_method = Forward_Euler,
-                             dest=case_name,activation = 'relu',
+                             dest=case_name,activation = 'tanh',
                              optimizer=Adam(lr),    
                              eq_params=[U,cu,cd,mu0,mu2],
                              loss_function='mse',
