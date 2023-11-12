@@ -50,14 +50,14 @@ def main():
     mu2 = -0.01
 
 
-    Nt = 10
+    Nt = 1000
     dt = 1e-2
     tot_eps = 1000
 
     # ------------------------------------------------------------------------------
     # Generate the collocation points and initial condition array
     # ------------------------------------------------------------------------------
-    X = grid_distribution(x1,x2,Nx)
+    X = sobol_distribution(x1,x2,Nx)
     #X  = np.linspace(x1,x2,num=Nx, dtype=np.float32)
     Input = X.reshape(Nx,-1)
 
