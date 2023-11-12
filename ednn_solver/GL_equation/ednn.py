@@ -308,7 +308,7 @@ class EvolutionalDNN:
         t3 = time.time()
         sol = np.linalg.lstsq(JJ,dudt,rcond = 1e-3) #Main computational cost of EDNN involves inverting the linear system JT J
         print('Durée Inverse JJ :', time.time()-t3)
-        print('Conditionnement Matrice JJ :', np.linalg.cond(JJ))
+        #print('Conditionnement Matrice JJ :', np.linalg.cond(JJ))
 
         dwdt = sol[0]
 
