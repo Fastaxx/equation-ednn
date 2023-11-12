@@ -29,7 +29,7 @@ def main():
     # NN and solution directory
     case_name = "GL_NN/"
     # Numer of collocation points
-    Nx = 500
+    Nx = 1000
     # if Initial == True, train the neural network for initial condition
     # if Initial == False, march the initial network stored in case_name
     if sys.argv[1] == '0':
