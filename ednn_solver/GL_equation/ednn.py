@@ -112,6 +112,8 @@ class EvolutionalDNN:
             self.ls_fn = logcosh_loss
         elif loss_function=='mape':
             self.ls_fn = mape_loss
+        elif loss_function=='mse_sobolev':
+            self.ls_fn = mse_loss_sobolev
 
         # Input definition
         coords = keras.layers.Input(self.din, name='coords')
@@ -152,7 +154,7 @@ class EvolutionalDNN:
 
 
     def train(self,
-              X_data, Y_data,
+              X_data, Y_data,Y_data_deriv,
               epochs, batch_size,
               flags=None,
               rnd_order_training=True,
@@ -211,8 +213,8 @@ class EvolutionalDNN:
 
                 # Create batches and cast to TF objects
                 (X_batch,
-                 Y_batch) = get_mini_batch(X_data,
-                                          Y_data,
+                 Y_batch,Y_batch_deriv) = get_mini_batch(X_data,
+                                          Y_data,Y_data_deriv,
                                           ba,
                                           batches,
                                           flag_idxs,
@@ -220,6 +222,7 @@ class EvolutionalDNN:
 
                 X_batch = tf.convert_to_tensor(X_batch)
                 Y_batch = tf.convert_to_tensor(Y_batch)
+                Y_batch_deriv = tf.convert_to_tensor(Y_batch_deriv)
                 ba_counter = tf.constant(ba)
 
                 if timer: 
@@ -399,6 +402,34 @@ class EvolutionalDNN:
 
         return loss_data
 
+    # For training of the EDNN at initial time on a batch of data. SOBOLEV
+    @tf.function
+    def training_step_gl_sobolev(self, X_batch, Y_batch, Y_batch_deriv):
+        with tf.GradientTape(persistent=True) as tape1:
+            tape1.watch(X_batch)
+            Ypred = self.output(X_batch)
+            Ypred_real = Ypred[0]
+            Ypred_img = Ypred[1]
+
+            dy_real = tape1.gradient(Ypred_real,X_batch)
+            dy_img = tape1.gradient(Ypred_img,X_batch)
+
+            aux_real = self.ls_fn(Ypred_real,Y_batch,dy_real,Y_batch_deriv)
+            aux_img = self.ls_fn(Ypred_img,Y_batch,dy_img,Y_batch_deriv)
+            
+            aux = aux_real+aux_img
+            loss_data = tf.add_n(aux)
+            loss = loss_data
+        gradients_data = tape1.gradient(loss_data,
+                    self.model.trainable_variables,
+                    unconnected_gradients=tf.UnconnectedGradients.ZERO)
+        del tape1
+        gradients = [x for x in gradients_data]
+        self.optimizer.apply_gradients(zip(gradients,
+                    self.model.trainable_variables))
+
+        return loss_data
+
     def print_status(self, ep, lu, verbose=False):
         """ Print status function """
 
@@ -411,7 +442,7 @@ class EvolutionalDNN:
             print(ep, f'{lu}', f'{lf}')
 
 # Get a mini batch of data from the full dataset. 
-def get_mini_batch(X, Y, ba, batches, flag_idxs, random=True):
+def get_mini_batch(X, Y, Yd, ba, batches, flag_idxs, random=True):
     idxs = []
     for fi in flag_idxs:
         if random:
@@ -422,5 +453,5 @@ def get_mini_batch(X, Y, ba, batches, flag_idxs, random=True):
             sl = slice(ba*flag_size, (ba+1)*flag_size)
             idxs.append(fi[sl])
     idxs = np.concatenate(idxs)
-    return X[idxs], Y[idxs]
+    return X[idxs], Y[idxs], Yd[idxs]
 

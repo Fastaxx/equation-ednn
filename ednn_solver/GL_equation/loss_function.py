@@ -57,6 +57,12 @@ def mape_loss(Ypred,Y_batch):
 	"""
 	return [100*tf.reduce_mean(tf.abs(Ypred[i] - Y_batch[i,:])/(Y_batch[i,:]+tf.keras.backend.epsilon())) for i in range(len(Ypred))]
 
+# MSE + Sobolev :
+def mse_loss_sobolev(Ypred,Y_batch,dY,Y_der):
+	"""
+	Compute the MSE Loss
+	"""
+	return [tf.reduce_mean(tf.square(Ypred[i] - Y_batch[i,:]) + tf.reduce_sum(tf.square(dY[i] - Y_der[i,:]))) for i in range(len(Ypred))]
 
 
 
