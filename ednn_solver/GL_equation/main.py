@@ -22,6 +22,10 @@ def Kflowinit(X):
     Y =   np.exp(-X*X)
     return Y
 
+def Kflowinit_deriv(X):
+    Y =  -2*X*np.exp(-X*X)
+    return Y
+
 def main():
     # -----------------------------------------------------------------------------
     # Parameters for simulation configuration
@@ -63,8 +67,9 @@ def main():
 
     #Initial condition
     Init = Kflowinit(X)
+    Init_deriv = Kflowinit_deriv(X)
     Init = Init.reshape(Nx,-1)    
-
+    Init_deriv = Init_deriv.reshape(Nx,-1)   
     try: 
         nrestart = int(np.genfromtxt(case_name + 'nrestart'))
     except OSError: 
@@ -79,23 +84,19 @@ def main():
     
     EDNN = EvolutionalDNN(layers,
                              rhs = rhs_gl, 
-                             marching_method = Forward_Euler,
+                             marching_method = Runge_Kutta,
                              dest=case_name,activation = 'tanh',
                              optimizer=Adam(lr),    
                              eq_params=[U,cu,cd,mu0,mu2],
                              loss_function='mse',
                              restore=True)
-    print('Learning rate:', EDNN.optimizer._decayed_lr(tf.float32))
-    
-    #print('Learning rate:', PINN.optimizer._decayed_lr(tf.float32))
-    
-    print("Num GPUs Available: ", tf.config.list_physical_devices('CPU'))
+    print('Learning rate:', EDNN.optimizer._decayed_lr(tf.float32))    
 
     if Initial: 
         t0 = time.time()
         # Train the initial condition tot_eps epochs,
         for i in range(tot_eps):
-            EDNN.train(Input, Init, epochs=1,
+            EDNN.train(Input, Init,Init_deriv, epochs=1,
                    batch_size=100, verbose=False, timer=False)
         # Evaluate and output the initial condition 
         Input = tf.convert_to_tensor(Input)
